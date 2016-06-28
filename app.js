@@ -49,7 +49,7 @@ var init = async () => {
     console.log('抓取完成!'.green);
 }
 
-var getPage = async (item, curPage) => {
+var getPage = (item, curPage) => {
     var uri = item.href || item;
     return new Promise((resolve, reject) => {
         node.request(encodeURI(uri), (err, res, body) => {
@@ -68,7 +68,7 @@ var getPage = async (item, curPage) => {
     })
 }
 
-var parseList = async (page) => {
+var parseList = (page) => {
     console.log('开始分析页面数据：%s'.blue, page.uri);
     var $ = node.cheerio.load(page.html);
     var $posts = $('.span1');
@@ -94,7 +94,7 @@ var parseList = async (page) => {
     return post;
 }
 
-var parsePage = async (page) => {
+var parsePage = (page) => {
     console.log('开始分析页面数据：%s'.blue, page.uri);
     var $ = node.cheerio.load(page.html);
     var $imgs = $('.detail_std');
@@ -111,7 +111,7 @@ var parsePage = async (page) => {
     return post;
 }
 
-var makeDir = async (post, work, character, cn) => {
+var makeDir = (post, work, character, cn) => {
     var path = node.path;
     post.dir = path.join(options.saveTo, cn + '_' + work + '_' + character);
     console.log('准备创建目录：%s'.blue, post.dir);
@@ -133,7 +133,7 @@ var makeDir = async (post, work, character, cn) => {
     });
 }
 
-var downImage = async (imgsrc, dir, page) => {
+var downImage = (imgsrc, dir, page) => {
     var url = node.url.parse(imgsrc);
     var fileName = node.path.basename(url.pathname);
     var toPath = node.path.join(dir, fileName);
