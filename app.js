@@ -49,6 +49,14 @@ var init = async () => {
     console.log('抓取完成!'.green);
 }
 
+var sleep = (t) => {
+    return new Promise((resolve, reject) => {
+        setTimeout(() => {
+            resolve();
+        }, t)
+    });
+}
+
 var getPage = (item, curPage) => {
     var uri = item.href || item;
     return new Promise((resolve, reject) => {
