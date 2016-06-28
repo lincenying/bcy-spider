@@ -1,0 +1,27 @@
+{
+  "name": "async-await",
+  "version": "1.0.0",
+  "description": "A async-await project",
+  "author": "lincenying &lt;lincenying@gmail.com&gt;",
+  "private": true,
+  "scripts": {
+    "dev": "node index.js"
+  },
+  "dependencies": {
+    "babel-core": "^6.10.4",
+    "babel-polyfill": "^6.9.1",
+    "babel-preset-es2015": "^6.9.0",
+    "babel-preset-stage-0": "^6.5.0",
+    "babel-preset-stage-3": "^6.11.0",
+    "cheerio": "^0.20.0",
+    "colors": "^1.1.2",
+    "fs": "^0.0.2",
+    "mkdirp": "^0.5.1",
+    "path": "^0.12.7",
+    "request": "^2.72.0",
+    "url": "^0.11.0"
+  },
+  "devDependencies": {
+    "locutus": "^2.0.5"
+  }
+}
