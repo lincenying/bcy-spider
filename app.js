@@ -21,30 +21,36 @@ colors.setTheme({
 var options = {
     uri: 'http://bcy.net/coser/allwork?&p=',
     saveTo: './images',
-    startPage: 1,
-    endPage: 1,
+    startPage: 2308,
+    endPage: 2308,
     downLimit: 5,
     totalPage: 0
 }
 
 var init = async () => {
-    if (!options.totalPage) options.totalPage = options.endPage - options.startPage + 1;
+    if (!options.totalPage) options.totalPage = options.endPage;
+    if (options.totalPage && !options.endPage) options.endPage = options.startPage + options.totalPage - 1;
     for (let i = options.startPage; i <= options.endPage; i++) {
-        let page = await getPage(options.uri + i, i);
+        console.log('======================'.yellow);
+        let uri = options.uri + i;
+        console.log('开始下载页面：%s'.blue, uri);
+        let page = await getPage(uri, i);
         let list = await parseList(page);
         for (let item of list.loc) {
+            console.log('------------------'.yellow);
             let itemPage = await getPage(item, list.page);
             let imagesList = await parsePage(itemPage);
-            let imageItem = await makeDir(imagesList);
+            let imageItem = await makeDir(imagesList, item.work, item.character, item.cn);
             for (let img of imageItem.loc) {
-                await downImage(imageItem, img);
+                await downImage(img, imageItem.dir, imageItem.page);
             }
         }
     }
     console.log('抓取完成!'.green);
 }
 
-var getPage = async (uri, curPage) => {
+var getPage = async (item, curPage) => {
+    var uri = item.href || item;
     return new Promise((resolve, reject) => {
         node.request(encodeURI(uri), (err, res, body) => {
             if (err) {
@@ -69,8 +75,16 @@ var parseList = async (page) => {
     var src = [];
     $posts.each(function() {
         var href = $(this).find('.work-thumbnail__bd').find("a").attr('href');
+        var work = $(this).find('.work-thumbnail__originality').text().replace('/', '-');
+        var character = $(this).find('.work-work-thumbnail__role').text().replace('/', '-');
+        var cn = $(this).find('.name').text().replace('/', '-');
         if (href) href = 'http://bcy.net' + href;
-        src.push(href)
+        src.push({
+            href: href,
+            work: work,
+            character: character,
+            cn: cn
+        })
     });
     var post = {
         page: page.curPage,
@@ -85,10 +99,6 @@ var parsePage = async (page) => {
     var $ = node.cheerio.load(page.html);
     var $imgs = $('.detail_std');
     var src = [];
-    var character = $('.post__role-headline').first().text();
-    var cn = $('.post__role').find("h3").first().text();
-    character = node.trim(character);
-    cn = node.trim(cn);
     $imgs.each(function() {
         var href = $(this).attr('src');
         href = href.replace('/w650', '');
@@ -96,16 +106,14 @@ var parsePage = async (page) => {
     });
     var post = {
         page: page.curPage,
-        loc: src,
-        character: character,
-        cn: cn
+        loc: src
     };
     return post;
 }
 
-var makeDir = async (post) => {
+var makeDir = async (post, work, character, cn) => {
     var path = node.path;
-    post.dir = path.join(options.saveTo, post.cn + '_' + post.character);
+    post.dir = path.join(options.saveTo, cn + '_' + work + '_' + character);
     console.log('准备创建目录：%s'.blue, post.dir);
     return new Promise((resolve, reject) => {
         if (post.loc.length <= 0) {
@@ -115,20 +123,21 @@ var makeDir = async (post) => {
             if (node.fs.existsSync(post.dir)) {
                 console.log('目录：%s 已经存在'.red, post.dir);
                 resolve(post);
+            } else {
+                node.mkdirp(post.dir, function(err) {
+                    console.log('目录：%s 创建成功'.green, post.dir);
+                    resolve(post);
+                });
             }
-            node.mkdirp(post.dir, function(err) {
-                resolve(post);
-                console.log('目录：%s 创建成功'.green, post.dir);
-            });
         }
     });
 }
 
-var downImage = async (post, imgsrc) => {
+var downImage = async (imgsrc, dir, page) => {
     var url = node.url.parse(imgsrc);
     var fileName = node.path.basename(url.pathname);
-    var toPath = node.path.join(post.dir, fileName);
-    console.log('开始下载图片：%s，保存到：%s，页数：%s / %s'.blue, fileName, post.dir, post.page, options.totalPage);
+    var toPath = node.path.join(dir, fileName);
+    console.log('开始下载图片：%s，保存到：%s，页数：%s / %s'.blue, fileName, dir, page, options.totalPage);
     return new Promise((resolve, reject) => {
         node.request(encodeURI(imgsrc)).pipe(node.fs.createWriteStream(toPath)).on('close', () => {
             console.log('图片下载成功：%s'.green, imgsrc);
