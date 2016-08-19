@@ -6,6 +6,7 @@ var node = {
     mkdirp: require('mkdirp'),
     path: require('path'),
     request: require('request'),
+    rp: require('request-promise'),
     url: require('url'),
     trim: require('locutus/php/strings/trim')
 }
@@ -28,21 +29,16 @@ var options = {
 }
 
 var getPage = (item, curPage) => {
-    return new Promise((resolve, reject) => {
-        var uri = item.href || item
-        node.request(encodeURI(uri), (err, res, body) => {
-            if (err) {
-                reject(err)
-            } else {
-                console.log('下载页面成功：%s'.green, uri)
-                var page = {
-                    curPage,
-                    uri,
-                    html: body
-                }
-                resolve(page)
-            }
-        })
+    var uri = item.href || item
+    return node.rp(encodeURI(uri)).then(body => {
+        console.log('下载页面成功：%s'.green, uri)
+        return {
+            curPage,
+            uri,
+            html: body
+        }
+    }).catch(function (err) {
+        console.log(err)
     })
 }
 
