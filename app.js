@@ -28,8 +28,8 @@ var options = {
 }
 
 var getPage = (item, curPage) => {
-    var uri = item.href || item
     return new Promise((resolve, reject) => {
+        var uri = item.href || item
         node.request(encodeURI(uri), (err, res, body) => {
             if (err) {
                 reject(err)
@@ -90,10 +90,10 @@ var parsePage = page => {
 }
 
 var makeDir = (post, work, character, cn) => {
-    var path = node.path
-    post.dir = path.join(options.saveTo, cn + '_' + work + '_' + character)
-    console.log('准备创建目录：%s'.blue, post.dir)
     return new Promise(resolve => {
+        var path = node.path
+        post.dir = path.join(options.saveTo, cn + '_' + work + '_' + character)
+        console.log('准备创建目录：%s'.blue, post.dir)
         if (post.loc.length <= 0) {
             console.log('当前没有图片, 放弃创建目录：%s'.red, post.dir)
             resolve(post)
@@ -112,11 +112,11 @@ var makeDir = (post, work, character, cn) => {
 }
 
 var downImage = (imgsrc, dir, page) => {
-    var url = node.url.parse(imgsrc)
-    var fileName = node.path.basename(url.pathname)
-    var toPath = node.path.join(dir, fileName)
-    console.log('开始下载图片：%s，保存到：%s，页数：%s / %s'.blue, fileName, dir, page, options.totalPage)
     return new Promise((resolve, reject) => {
+        var url = node.url.parse(imgsrc)
+        var fileName = node.path.basename(url.pathname)
+        var toPath = node.path.join(dir, fileName)
+        console.log('开始下载图片：%s，保存到：%s，页数：%s / %s'.blue, fileName, dir, page, options.totalPage)
         node.request(encodeURI(imgsrc)).pipe(node.fs.createWriteStream(toPath)).on('close', () => {
             console.log('图片下载成功：%s'.green, imgsrc)
             resolve()
@@ -141,8 +141,15 @@ var init = async () => {
             const itemPage = await getPage(item, list.page)
             const imagesList = await parsePage(itemPage)
             const imageItem = await makeDir(imagesList, item.work, item.character, item.cn)
+            var length = imageItem.loc.length, num = 1, task = []
+            console.log('开始下载图片, 总数：%s'.blue, length)
             for (const img of imageItem.loc) {
-                await downImage(img, imageItem.dir, imageItem.page)
+                task.push(downImage(img, imageItem.dir, imageItem.page))
+                if (num % options.downLimit === 0 || num >= length) {
+                    await Promise.all(task)
+                    task = []
+                }
+                num++
             }
         }
     }
